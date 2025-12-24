@@ -1,6 +1,6 @@
 {
   "name": "@twn39/edgetts-js",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "TypeScript/JavaScript port of edge-tts for browser environments using native WebSocket and Fetch APIs",
   "main": "dist/index.cjs",
   "module": "dist/index.js",
