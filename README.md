@@ -242,13 +242,6 @@ const usVoices = manager.findByLocale('en-US');
 console.log('Available locales:', manager.getLocales());
 ```
 
-## Examples
-
-See the `examples/` directory for complete working examples:
-
-- **basic-usage.html**: Simple text-to-speech conversion
-- **streaming-with-subtitles.html**: Real-time subtitle generation
-- **voice-selection.html**: Browse and select from available voices
 
 ## Demo
 
