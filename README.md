@@ -1,4 +1,10 @@
-# Edge TTS JS
+# @twn39/edgetts-js
+
+[![npm version](https://img.shields.io/npm/v/@twn39/edgetts-js.svg)](https://www.npmjs.com/package/@twn39/edgetts-js)
+[![npm downloads](https://img.shields.io/npm/dm/@twn39/edgetts-js.svg)](https://www.npmjs.com/package/@twn39/edgetts-js)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue.svg)](https://www.typescriptlang.org/)
+[![Browser Compatible](https://img.shields.io/badge/Browser-Compatible-brightgreen.svg)](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket)
 
 TypeScript/JavaScript port of the Python [edge-tts](https://github.com/rany2/edge-tts) library, designed to work in browser environments using native WebSocket and Fetch APIs.
 
@@ -16,13 +22,13 @@ This library allows you to use Microsoft Edge's online text-to-speech service wi
 ## Installation
 
 ```bash
-npm install edgetts-js
+npm install @twn39/edgetts-js
 ```
 
 ## Quick Start
 
 ```typescript
-import { Communicate } from 'edgetts-js';
+import { Communicate } from '@twn39/edgetts-js';
 
 const communicate = new Communicate('Hello, world!', {
   voice: 'en-US-EmmaMultilingualNeural',
@@ -151,7 +157,7 @@ Get the SRT formatted subtitles.
 **Example:**
 
 ```typescript
-import { Communicate, SubMaker } from 'edgetts-js';
+import { Communicate, SubMaker } from '@twn39/edgetts-js';
 
 const communicate = new Communicate('Hello world!', { boundary: 'SentenceBoundary' });
 const submaker = new SubMaker();
@@ -226,7 +232,7 @@ Find all matching voices based on the provided attributes.
 **Example:**
 
 ```typescript
-import { VoicesManager } from 'edgetts-js';
+import { VoicesManager } from '@twn39/edgetts-js';
 
 const manager = await VoicesManager.create();
 
