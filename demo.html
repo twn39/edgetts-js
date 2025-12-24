@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edge TTS Demo</title>
+    <style>
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #12121a;
+            --bg-card: #1a1a25;
+            --text-primary: #f0f0f5;
+            --text-secondary: #8888a0;
+            --accent: #6366f1;
+            --accent-hover: #818cf8;
+            --success: #22c55e;
+            --border: #2a2a3a;
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent) 0%, #a855f7 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        @media (max-width: 900px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 24px;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card-title::before {
+            content: '';
+            width: 4px;
+            height: 20px;
+            background: var(--accent);
+            border-radius: 2px;
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        /* TTS Section */
+        .tts-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        textarea,
+        select,
+        input[type="text"] {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px 14px;
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        textarea:focus,
+        select:focus,
+        input[type="text"]:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+        }
+
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        select {
+            cursor: pointer;
+        }
+
+        .controls-row {
+            display: flex;
+            gap: 12px;
+        }
+
+        .controls-row .form-group {
+            flex: 1;
+        }
+
+        button {
+            background: linear-gradient(135deg, var(--accent) 0%, #8b5cf6 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+        }
+
+        /* Audio Player */
+        .audio-container {
+            margin-top: 16px;
+            padding: 16px;
+            background: var(--bg-secondary);
+            border-radius: 10px;
+            display: none;
+        }
+
+        .audio-container.visible {
+            display: block;
+        }
+
+        audio {
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        /* Voices Table */
+        .voices-container {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .voices-grid {
+            display: grid;
+            gap: 8px;
+        }
+
+        .voice-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            background: var(--bg-secondary);
+            border-radius: 10px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.2s;
+        }
+
+        .voice-item:hover {
+            background: var(--border);
+            transform: translateX(4px);
+        }
+
+        .voice-item.selected {
+            background: var(--accent);
+        }
+
+        .voice-name {
+            font-weight: 500;
+        }
+
+        .voice-meta {
+            display: flex;
+            gap: 16px;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+        }
+
+        .voice-item.selected .voice-meta {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        /* Subtitles */
+        .subtitles-container {
+            max-height: 300px;
+            overflow-y: auto;
+            background: var(--bg-secondary);
+            border-radius: 10px;
+            padding: 16px;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 0.85rem;
+            white-space: pre-wrap;
+            color: var(--text-secondary);
+        }
+
+        /* Status */
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 16px;
+            background: var(--bg-secondary);
+            border-radius: 10px;
+            font-size: 0.9rem;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--text-secondary);
+        }
+
+        .status-dot.loading {
+            background: var(--accent);
+            animation: pulse 1.5s infinite;
+        }
+
+        .status-dot.success {
+            background: var(--success);
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.4;
+            }
+        }
+
+        /* Search */
+        .search-box {
+            margin-bottom: 16px;
+        }
+
+        /* Stats */
+        .stats {
+            display: flex;
+            gap: 24px;
+            margin-bottom: 16px;
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        /* Loading overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(10, 10, 15, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .loading-overlay.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+    </div>
+
+    <div class="container">
+        <header>
+            <h1>🔊 Edge TTS Demo</h1>
+            <p class="subtitle">使用 Microsoft Edge 在线文本转语音服务的 TypeScript/JavaScript 库</p>
+        </header>
+
+        <div class="grid">
+            <!-- TTS Card -->
+            <div class="card">
+                <h2 class="card-title">文本转语音</h2>
+                <div class="tts-controls">
+                    <div class="form-group">
+                        <label for="ttsText">输入文本</label>
+                        <textarea id="ttsText"
+                            placeholder="输入要转换的文本...">你好，欢迎使用 Edge TTS！这是一个基于 TypeScript 的文本转语音库。</textarea>
+                    </div>
+
+                    <div class="controls-row">
+                        <div class="form-group">
+                            <label for="rateSlider">语速: <span id="rateValue">+0%</span></label>
+                            <input type="range" id="rateSlider" min="-50" max="100" value="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="pitchSlider">音调: <span id="pitchValue">+0Hz</span></label>
+                            <input type="range" id="pitchSlider" min="-50" max="50" value="0">
+                        </div>
+                    </div>
+
+                    <div class="status" id="ttsStatus">
+                        <span class="status-dot" id="statusDot"></span>
+                        <span id="statusText">准备就绪</span>
+                    </div>
+
+                    <button id="synthesizeBtn" onclick="synthesize()">
+                        🎙️ 开始合成
+                    </button>
+
+                    <div class="audio-container" id="audioContainer">
+                        <label>生成的音频:</label>
+                        <audio id="audioPlayer" controls></audio>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Voices Card -->
+            <div class="card">
+                <h2 class="card-title">可用语音</h2>
+                <div class="stats" id="voiceStats">
+                    <div class="stat-item">
+                        <span class="stat-value" id="totalVoices">-</span>
+                        <span class="stat-label">总语音数</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value" id="totalLocales">-</span>
+                        <span class="stat-label">语言/地区</span>
+                    </div>
+                </div>
+
+                <div class="search-box">
+                    <input type="text" id="voiceSearch" placeholder="搜索语音 (如: zh-CN, Jenny, Female)"
+                        oninput="filterVoices()">
+                </div>
+
+                <div class="voices-container">
+                    <div class="voices-grid" id="voicesList">
+                        <div class="voice-item">正在加载语音列表...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Subtitles Card -->
+            <div class="card full-width">
+                <h2 class="card-title">字幕输出 (SRT)</h2>
+                <div class="subtitles-container" id="subtitlesOutput">
+                    合成音频后，字幕将显示在这里...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { Communicate, listVoices, VoicesManager, SubMaker } from './dist/index.js';
+
+        let voicesManager = null;
+        let allVoices = [];
+        let selectedVoice = 'zh-CN-XiaoxiaoNeural';
+
+        // Init
+        async function init() {
+            showLoading(true);
+            try {
+                const voices = await listVoices();
+                voicesManager = await VoicesManager.create(voices);
+                allVoices = voicesManager.getAllVoices();
+
+                document.getElementById('totalVoices').textContent = allVoices.length;
+                document.getElementById('totalLocales').textContent = voicesManager.getLocales().length;
+
+                renderVoices(allVoices);
+            } catch (error) {
+                console.error('Failed to load voices:', error);
+                document.getElementById('voicesList').innerHTML =
+                    '<div class="voice-item">加载失败: ' + error.message + '</div>';
+            }
+            showLoading(false);
+        }
+
+        function renderVoices(voices) {
+            const container = document.getElementById('voicesList');
+            container.innerHTML = voices.slice(0, 100).map(voice => `
+                <div class="voice-item ${voice.ShortName === selectedVoice ? 'selected' : ''}" 
+                     onclick="selectVoice('${voice.ShortName}')">
+                    <span class="voice-name">${voice.ShortName}</span>
+                    <span class="voice-meta">
+                        <span>${voice.Gender}</span>
+                        <span>${voice.Locale}</span>
+                    </span>
+                </div>
+            `).join('');
+        }
+
+        window.selectVoice = function (shortName) {
+            selectedVoice = shortName;
+            renderVoices(allVoices.filter(v =>
+                v.ShortName.toLowerCase().includes(document.getElementById('voiceSearch').value.toLowerCase())
+            ));
+        };
+
+        window.filterVoices = function () {
+            const query = document.getElementById('voiceSearch').value.toLowerCase();
+            const filtered = allVoices.filter(v =>
+                v.ShortName.toLowerCase().includes(query) ||
+                v.Locale.toLowerCase().includes(query) ||
+                v.Gender.toLowerCase().includes(query)
+            );
+            renderVoices(filtered);
+        };
+
+        window.synthesize = async function () {
+            const text = document.getElementById('ttsText').value;
+            if (!text.trim()) {
+                alert('请输入文本');
+                return;
+            }
+
+            const rate = document.getElementById('rateSlider').value;
+            const pitch = document.getElementById('pitchSlider').value;
+
+            setStatus('loading', '正在合成音频...');
+            document.getElementById('synthesizeBtn').disabled = true;
+
+            try {
+                const communicate = new Communicate(text, {
+                    voice: selectedVoice,
+                    rate: (rate >= 0 ? '+' : '') + rate + '%',
+                    pitch: (pitch >= 0 ? '+' : '') + pitch + 'Hz',
+                });
+
+                const audioChunks = [];
+                const submaker = new SubMaker();
+
+                for await (const chunk of communicate.stream()) {
+                    if (chunk.type === 'audio') {
+                        audioChunks.push(chunk.data);
+                    } else if (chunk.type === 'WordBoundary' || chunk.type === 'SentenceBoundary') {
+                        submaker.feed(chunk);
+                    }
+                }
+
+                // Create audio blob and play
+                const audioBlob = new Blob(audioChunks, { type: 'audio/mpeg' });
+                const audioUrl = URL.createObjectURL(audioBlob);
+                const audioPlayer = document.getElementById('audioPlayer');
+                audioPlayer.src = audioUrl;
+                document.getElementById('audioContainer').classList.add('visible');
+
+                // Show subtitles
+                const srt = submaker.getSrt();
+                document.getElementById('subtitlesOutput').textContent = srt || '（无字幕数据）';
+
+                setStatus('success', '合成完成！');
+            } catch (error) {
+                console.error('Synthesis failed:', error);
+                setStatus('error', '合成失败: ' + error.message);
+            }
+
+            document.getElementById('synthesizeBtn').disabled = false;
+        };
+
+        function setStatus(type, text) {
+            const dot = document.getElementById('statusDot');
+            const statusText = document.getElementById('statusText');
+            dot.className = 'status-dot ' + type;
+            statusText.textContent = text;
+        }
+
+        function showLoading(show) {
+            document.getElementById('loadingOverlay').classList.toggle('visible', show);
+        }
+
+        // Slider updates
+        document.getElementById('rateSlider').addEventListener('input', (e) => {
+            const val = e.target.value;
+            document.getElementById('rateValue').textContent = (val >= 0 ? '+' : '') + val + '%';
+        });
+
+        document.getElementById('pitchSlider').addEventListener('input', (e) => {
+            const val = e.target.value;
+            document.getElementById('pitchValue').textContent = (val >= 0 ? '+' : '') + val + 'Hz';
+        });
+
+        // Start
+        init();
+    </script>
+</body>
+
+</html>
