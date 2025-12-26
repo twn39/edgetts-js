@@ -1,3 +1,5 @@
+<div align="center">
+
 # @twn39/edgetts-js
 
 [![npm version](https://img.shields.io/npm/v/@twn39/edgetts-js.svg)](https://www.npmjs.com/package/@twn39/edgetts-js)
@@ -5,10 +7,14 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue.svg)](https://www.typescriptlang.org/)
 [![Browser Compatible](https://img.shields.io/badge/Browser-Compatible-brightgreen.svg)](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket)
+[![Daily Tests](https://github.com/twn39/edgetts-js/actions/workflows/test.yml/badge.svg)](https://github.com/twn39/edgetts-js/actions/workflows/test.yml)
 
 TypeScript/JavaScript port of the Python [edge-tts](https://github.com/rany2/edge-tts) library, designed to work in browser environments using native WebSocket and Fetch APIs.
 
+
 This library allows you to use Microsoft Edge's online text-to-speech service without needing Windows or the Edge browser.
+
+</div>
 
 ## Features
 
