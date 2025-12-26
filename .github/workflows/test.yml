@@ -1,6 +1,10 @@
 name: Daily Tests
 
 on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master, develop ]
   schedule:
     # 每天北京时间 09:00 (UTC 01:00) 运行
     - cron: '0 1 * * *'
