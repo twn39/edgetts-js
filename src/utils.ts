@@ -98,7 +98,9 @@ function findSafeUtf8SplitPoint(textSegment: Uint8Array): number {
 
   while (splitAt > 0) {
     try {
-      new TextDecoder().decode(textSegment.slice(0, splitAt));
+      // Use fatal mode so that incomplete multi-byte sequences throw a
+      // TypeError instead of being silently replaced with U+FFFD.
+      new TextDecoder('utf-8', { fatal: true }).decode(textSegment.slice(0, splitAt));
       return splitAt;
     } catch {
       splitAt--;

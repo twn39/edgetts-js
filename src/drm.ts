@@ -78,22 +78,27 @@ export class DRM {
    * @returns The generated Sec-MS-GEC token value.
    */
   static async generateSecMsGec(): Promise<string> {
-    // Get the current timestamp in Unix format with clock skew correction
-    let ticks = DRM.getUnixTimestamp();
+    // Use BigInt for the entire computation to avoid IEEE 754 precision loss.
+    // In the range ~10^17 (100-nanosecond ticks since Windows epoch), doubles
+    // only have ~15-16 significant digits, so integer values spaced 16 apart
+    // may be rounded, producing an incorrect GEC token (→ 403 from server).
+    //
+    // BigInt arithmetic is exact: the result matches Python's integer path and
+    // the f"{ticks:.0f}" format string in the reference implementation.
+    const nowSec = BigInt(Math.floor(DRM.getUnixTimestamp()));
 
     // Switch to Windows file time epoch (1601-01-01 00:00:00 UTC)
-    ticks += WIN_EPOCH;
+    const WIN_EPOCH_BIG = 11644473600n;
+    let ticks = nowSec + WIN_EPOCH_BIG;
 
-    // Round down to the nearest 5 minutes (300 seconds)
-    ticks -= ticks % 300;
+    // Round down to the nearest 5-minute boundary (300 seconds)
+    ticks -= ticks % 300n;
 
-    // Convert the ticks to 100-nanosecond intervals (Windows file time format)
-    ticks *= S_TO_NS / 100;
+    // Convert to 100-nanosecond intervals (Windows FILETIME format)
+    ticks *= 10_000_000n;
 
-    // Create the string to hash by concatenating the ticks and the trusted client token
-    const strToHash = `${Math.floor(ticks)}${TRUSTED_CLIENT_TOKEN}`;
-
-    // Compute the SHA256 hash and return the uppercased hex digest
+    // Hash: SHA-256(ticks_string + TRUSTED_CLIENT_TOKEN)
+    const strToHash = `${ticks}${TRUSTED_CLIENT_TOKEN}`;
     const encoder = new TextEncoder();
     const data = encoder.encode(strToHash);
     const hashBuffer = await crypto.subtle.digest('SHA-256', data);

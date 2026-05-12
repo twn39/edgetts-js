@@ -61,6 +61,8 @@ export {
   BASE_HEADERS,
   WSS_HEADERS,
   VOICE_HEADERS,
+  TICKS_PER_SECOND,
+  MP3_BITRATE_BPS,
 } from './constants';
 
 // DRM

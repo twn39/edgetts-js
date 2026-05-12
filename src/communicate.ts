@@ -3,7 +3,7 @@
  * end-users. The other classes and functions are for internal use only.
  */
 
-import { DEFAULT_VOICE, SEC_MS_GEC_VERSION, WSS_HEADERS, WSS_URL } from './constants';
+import { DEFAULT_VOICE, MP3_BITRATE_BPS, SEC_MS_GEC_VERSION, TICKS_PER_SECOND, VOICE_LIST, WSS_HEADERS, WSS_URL } from './constants';
 import { TTSChunk, TTSChunkMetadata, TTSConfig, CommunicateOptions, CommunicateState } from './types';
 import { DRM } from './drm';
 import {
@@ -127,6 +127,8 @@ export class Communicate {
       offsetCompensation: 0,
       lastDurationOffset: 0,
       streamWasCalled: false,
+      chunkAudioBytes: 0,
+      cumulativeAudioBytes: 0,
     };
   }
 
@@ -177,13 +179,27 @@ export class Communicate {
     // Note: WebSocket API doesn't support custom headers in browser
     // We rely on URL parameters for authentication
 
-    // Create a promise that resolves when the WebSocket is ready
+    // Create a promise that resolves when the WebSocket is ready.
+    // We capture the close code from onclose so that the error thrown by
+    // onerror (which carries no status info in browser) can be supplemented
+    // with the close code when onclose fires shortly after.
+    let closeCode = 0;
     const readyPromise = new Promise<void>((resolve, reject) => {
       ws.onopen = () => resolve();
-      ws.onerror = (error) => reject(new WebSocketError(error?.toString() ?? 'Unknown error'));
+      ws.onerror = () => {
+        // onerror fires before onclose; close code is not available yet.
+        // We use a microtask delay so onclose can record closeCode first.
+        Promise.resolve().then(() => {
+          const codeInfo = closeCode ? ` (close code ${closeCode})` : '';
+          reject(new WebSocketError(`WebSocket connection failed${codeInfo}`));
+        });
+      };
       ws.onclose = (event) => {
+        closeCode = event.code;
         if (event.code !== 1000) {
-          reject(new WebSocketError(`WebSocket closed with code ${event.code}`));
+          reject(new WebSocketError(
+            `WebSocket closed with code ${event.code}${event.reason ? ': ' + event.reason : ''}`
+          ));
         }
       };
     });
@@ -250,11 +266,18 @@ export class Communicate {
             // Update the last duration offset for use by the next SSML request
             this.state.lastDurationOffset = parsedMetadata.offset + parsedMetadata.duration;
           } else if (path === 'turn.end') {
-            // Update the offset compensation for the next SSML request
-            this.state.offsetCompensation = this.state.lastDurationOffset;
-
-            // Use average padding typically added by the service
-            this.state.offsetCompensation += 8_750_000;
+            // CBR-based inter-chunk offset compensation.
+            // The output format is audio-24khz-48kbitrate-mono-mp3 (48 kbps CBR).
+            // For any CBR stream the byte-to-tick conversion is exact integer
+            // arithmetic: ticks = total_bytes * 8 * TICKS_PER_SECOND / MP3_BITRATE_BPS
+            // This replaces the previous metadata-based accumulation which drifted
+            // on long texts due to variable AI silence and Microsoft's integer
+            // overflow in reported offsets.
+            this.state.cumulativeAudioBytes += this.state.chunkAudioBytes;
+            this.state.offsetCompensation = Math.floor(
+              (this.state.cumulativeAudioBytes * 8 * TICKS_PER_SECOND) / MP3_BITRATE_BPS
+            );
+            this.state.chunkAudioBytes = 0;
 
             // Signal that we're done with this chunk
             if (resolvePromise) {
@@ -341,8 +364,9 @@ export class Communicate {
             return;
           }
 
-          // Add audio data to queue
+          // Add audio data to queue and count bytes for CBR offset compensation
           audioWasReceived = true;
+          this.state.chunkAudioBytes += audioData.length;
           messageQueue.push({ type: 'audio', data: audioData });
         }
       } catch (error) {
@@ -409,18 +433,58 @@ export class Communicate {
     // Stream the audio and metadata from the service
     for (const partialText of this.texts) {
       this.state.partialText = partialText;
+      this.state.chunkAudioBytes = 0;
       try {
         yield* this.streamInternal();
       } catch (error) {
-        // Handle 403 errors by retrying with adjusted clock skew
-        if (error instanceof WebSocketError && error.message.includes('403')) {
-          // In browser, we can't easily access response headers
-          // We'll just retry once
+        // The browser WebSocket API does not expose the HTTP status code from a
+        // failed handshake — a 403 (expired GEC token) looks identical to any
+        // other connection error.  Therefore we attempt a clock-skew correction
+        // via HTTP probe and retry once for *any* WebSocketError, matching the
+        // spirit of the Python implementation's 403-specific retry.
+        if (error instanceof WebSocketError) {
+          await this.adjustClockSkewFromServer();
+          this.state.chunkAudioBytes = 0;
           yield* this.streamInternal();
         } else {
           throw error;
         }
       }
+    }
+  }
+
+  /**
+   * Adjust the clock skew by probing the voice-list endpoint via HTTP GET.
+   *
+   * The browser's WebSocket API does not expose HTTP response headers during
+   * the WS handshake, so we cannot read the `Date` header from a failed WS
+   * response directly. Instead we send a GET request to the voice list URL
+   * and abort the body transfer as soon as the response headers arrive —
+   * we only need the `Date` header to compute the server-client clock delta.
+   *
+   * Note: the voice-list endpoint does not support HEAD (returns 404), so
+   * we use GET + AbortController to avoid downloading the full body.
+   *
+   * If the probe itself fails we silently ignore it so the caller can still
+   * attempt the WebSocket retry.
+   */
+  private async adjustClockSkewFromServer(): Promise<void> {
+    const controller = new AbortController();
+    try {
+      const secMsGec = await DRM.generateSecMsGec();
+      const probeUrl = `${VOICE_LIST}&Sec-MS-GEC=${secMsGec}&Sec-MS-GEC-Version=${SEC_MS_GEC_VERSION}`;
+      const resp = await fetch(probeUrl, { signal: controller.signal });
+      // Abort body transfer immediately — we only need the response headers.
+      controller.abort();
+      const serverDate = resp.headers.get('Date');
+      if (serverDate) {
+        const serverTs = DRM.parseRFC2616Date(serverDate);
+        if (serverTs !== null) {
+          DRM.adjustClockSkewSeconds(serverTs - DRM.getUnixTimestamp());
+        }
+      }
+    } catch {
+      // Silently ignore probe failures (including the intentional abort).
     }
   }
 

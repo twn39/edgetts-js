@@ -6,20 +6,18 @@
 [![npm downloads](https://img.shields.io/npm/dm/@twn39/edgetts-js.svg)](https://www.npmjs.com/package/@twn39/edgetts-js)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue.svg)](https://www.typescriptlang.org/)
-[![Browser Compatible](https://img.shields.io/badge/Browser-Compatible-brightgreen.svg)](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket)
 [![Daily Tests](https://github.com/twn39/edgetts-js/actions/workflows/test.yml/badge.svg)](https://github.com/twn39/edgetts-js/actions/workflows/test.yml)
 
-TypeScript/JavaScript port of the Python [edge-tts](https://github.com/rany2/edge-tts) library, designed to work in browser environments using native WebSocket and Fetch APIs.
+TypeScript/JavaScript port of the Python [edge-tts](https://github.com/rany2/edge-tts) library, designed primarily for Node.js environments.
 
-
-This library allows you to use Microsoft Edge's online text-to-speech service without needing Windows or the Edge browser.
+This library allows you to use Microsoft Edge's online text-to-speech service natively from Node.js without needing Windows or the Edge browser.
 
 </div>
 
 ## Features
 
-- 🌐 Browser-compatible - Uses native WebSocket and Fetch APIs
 - 🎯 TypeScript support - Full type definitions included
+- 🚀 Node.js native - Uses native `ws` and Fetch APIs
 - 🎤 Multiple voices - Access to all Microsoft Edge TTS voices
 - 📝 Subtitle support - Generate SRT subtitles with WordBoundary/SentenceBoundary events
 - 🔄 Streaming - Stream audio and metadata in real-time
@@ -55,32 +53,6 @@ for await (const chunk of communicate.stream()) {
 }
 ```
 
-## Browser Usage
-
-```html
-<!DOCTYPE html>
-<html>
-<head>
-    <script type="module">
-        import { Communicate } from './dist/index.js';
-        
-        const communicate = new Communicate('Hello, world!');
-        const audioChunks = [];
-        
-        for await (const chunk of communicate.stream()) {
-            if (chunk.type === 'audio') {
-                audioChunks.push(chunk.data);
-            }
-        }
-        
-        const audioBlob = new Blob(audioChunks, { type: 'audio/mpeg' });
-        const audioUrl = URL.createObjectURL(audioBlob);
-        const audio = new Audio(audioUrl);
-        audio.play();
-    </script>
-</head>
-</html>
-```
 
 ## API Reference
 
@@ -257,14 +229,13 @@ console.log('Available locales:', manager.getLocales());
 
 ## Demo
 
-Open `demo.html` in a browser to try an interactive demo:
+Open `demo.html` in a browser to try an interactive demo. Since direct browser WebSocket connections to Microsoft's servers are often intercepted by firewalls or routing rules, the demo uses a local Node.js proxy (`proxy.mjs`) to bridge the connection.
 
 ```bash
-# Start a local server
-pnpm build
-python3 -m http.server 8080
+# Start the proxy and local server (runs on port 3000)
+pnpm demo
 
-# Open http://localhost:8080/demo.html
+# Then open http://localhost:3000/demo.html
 ```
 
 The demo showcases:
@@ -310,25 +281,20 @@ pnpm test:watch
 - ✅ VoicesManager (voice filtering - integration tests with real API)
 - ✅ Communicate (parameter validation)
 
-## Browser Compatibility
+## Environment Compatibility
 
-This library uses modern browser APIs:
-- `WebSocket` - For streaming audio
-- `fetch` - For HTTP requests
-- `crypto.subtle` - For DRM token generation
+This library uses:
+- `WebSocket` - Provided by `ws` in Node.js
+- `fetch` - Native Node.js `fetch` (requires Node 18+)
+- `crypto` - Node.js native crypto module
 - `AsyncGenerator` - For streaming data
 
-**Minimum browser versions:**
-- Chrome 63+
-- Firefox 57+
-- Safari 11+
-- Edge 79+
+**Minimum Node.js version:**
+- Node.js 18+
 
 ## Limitations
 
-- **Custom Headers**: Browser WebSocket API doesn't support custom request headers. Authentication is handled via URL parameters.
-- **Proxy**: Proxy configuration is not supported in browser environments.
-- **CORS**: The service must allow CORS requests from your domain.
+- **Browser Usage**: Running this library directly in a browser is not supported out-of-the-box because browsers lack the specific TLS fingerprints and headers required to bypass Microsoft's server restrictions (and often get intercepted by network proxies/firewalls). To use it in a browser, you must relay WebSocket traffic through a Node.js proxy, as demonstrated in the included `demo.html` and `proxy.mjs`.
 
 ## License
 

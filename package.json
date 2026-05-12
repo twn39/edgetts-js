@@ -22,6 +22,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
+    "proxy": "node proxy.mjs",
+    "demo": "vite build && (node proxy.mjs &) && npx serve . -p 3000",
     "prepublishOnly": "npm run build"
   },
   "keywords": [

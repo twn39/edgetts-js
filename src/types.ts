@@ -61,6 +61,10 @@ export interface CommunicateState {
   offsetCompensation: number;
   lastDurationOffset: number;
   streamWasCalled: boolean;
+  /** Bytes received in the current WebSocket chunk (reset on each new chunk). */
+  chunkAudioBytes: number;
+  /** Cumulative bytes received across all completed chunks. */
+  cumulativeAudioBytes: number;
 }
 
 export interface Subtitle {

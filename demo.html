@@ -1,592 +1,581 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edge TTS Demo</title>
-    <style>
-        :root {
-            --bg-primary: #0a0a0f;
-            --bg-secondary: #12121a;
-            --bg-card: #1a1a25;
-            --text-primary: #f0f0f5;
-            --text-secondary: #8888a0;
-            --accent: #6366f1;
-            --accent-hover: #818cf8;
-            --success: #22c55e;
-            --border: #2a2a3a;
-            --shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Edge TTS JS — Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:        #080810;
+  --bg2:       #10101c;
+  --bg3:       #181828;
+  --border:    #25253a;
+  --accent:    #6366f1;
+  --accent2:   #8b5cf6;
+  --green:     #22c55e;
+  --red:       #ef4444;
+  --amber:     #f59e0b;
+  --text:      #eeeef5;
+  --muted:     #7070a0;
+  --shadow:    0 8px 32px rgba(0,0,0,.5);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;line-height:1.6}
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+/* ── layout ── */
+.wrap{max-width:1280px;margin:0 auto;padding:40px 20px}
+header{text-align:center;margin-bottom:48px}
+h1{font-size:2.4rem;font-weight:700;background:linear-gradient(135deg,var(--accent),var(--accent2),#ec4899);
+   -webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px}
+.tagline{color:var(--muted);font-size:1rem}
+.badge{display:inline-block;background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.3);
+       border-radius:20px;padding:2px 10px;font-size:.75rem;color:var(--accent);margin-top:8px}
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: var(--bg-primary);
-            color: var(--text-primary);
-            min-height: 100vh;
-            line-height: 1.6;
-        }
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+@media(max-width:860px){.grid{grid-template-columns:1fr}}
+.full{grid-column:1/-1}
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 40px 20px;
-        }
+.card{background:var(--bg3);border:1px solid var(--border);border-radius:16px;
+      padding:24px;box-shadow:var(--shadow)}
+.card-head{font-size:1.05rem;font-weight:600;margin-bottom:18px;display:flex;
+           align-items:center;gap:10px;color:var(--text)}
+.card-head .icon{font-size:1.2rem}
 
-        header {
-            text-align: center;
-            margin-bottom: 50px;
-        }
+/* ── form elements ── */
+.fg{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+label{font-size:.8rem;color:var(--muted);font-weight:500;letter-spacing:.02em}
+textarea,select,input[type=text]{background:var(--bg2);border:1px solid var(--border);
+  border-radius:10px;padding:10px 14px;color:var(--text);font-size:.9rem;font-family:inherit;
+  transition:border-color .2s,box-shadow .2s;width:100%}
+textarea{min-height:110px;resize:vertical}
+textarea:focus,select:focus,input[type=text]:focus{outline:none;border-color:var(--accent);
+  box-shadow:0 0 0 3px rgba(99,102,241,.18)}
+select{cursor:pointer}
 
-        h1 {
-            font-size: 2.5rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, var(--accent) 0%, #a855f7 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 10px;
-        }
+.row{display:flex;gap:12px}
+.row .fg{flex:1;margin-bottom:0}
 
-        .subtitle {
-            color: var(--text-secondary);
-            font-size: 1.1rem;
-        }
+input[type=range]{width:100%;accent-color:var(--accent);cursor:pointer}
 
-        .grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 30px;
-        }
+/* ── buttons ── */
+.btn{display:inline-flex;align-items:center;gap:8px;border:none;border-radius:10px;
+     padding:11px 22px;font-size:.9rem;font-weight:600;cursor:pointer;
+     transition:transform .15s,box-shadow .15s,opacity .15s;font-family:inherit}
+.btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(99,102,241,.4)}
+.btn-secondary{background:var(--bg2);border:1px solid var(--border);color:var(--text)}
+.btn-secondary:hover{border-color:var(--accent);color:var(--accent)}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none!important;box-shadow:none!important}
+.btn-sm{padding:7px 14px;font-size:.8rem}
+.btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
 
-        @media (max-width: 900px) {
-            .grid {
-                grid-template-columns: 1fr;
-            }
-        }
+/* ── status ── */
+.status{display:flex;align-items:center;gap:8px;padding:10px 14px;
+        background:var(--bg2);border-radius:10px;font-size:.85rem;margin-bottom:14px;
+        border:1px solid var(--border)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--muted);flex-shrink:0}
+.dot.loading{background:var(--accent);animation:pulse 1.2s infinite}
+.dot.ok{background:var(--green)}
+.dot.err{background:var(--red)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 
-        .card {
-            background: var(--bg-card);
-            border-radius: 16px;
-            padding: 24px;
-            border: 1px solid var(--border);
-            box-shadow: var(--shadow);
-        }
+/* ── audio ── */
+.audio-wrap{display:none;margin-top:14px;padding:14px;background:var(--bg2);
+            border-radius:10px;border:1px solid var(--border)}
+.audio-wrap.show{display:block}
+audio{width:100%;margin-top:8px}
 
-        .card-title {
-            font-size: 1.25rem;
-            font-weight: 600;
-            margin-bottom: 16px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
+/* ── metrics ── */
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px}
+@media(max-width:640px){.metrics{grid-template-columns:repeat(2,1fr)}}
+.metric{background:var(--bg2);border:1px solid var(--border);border-radius:10px;
+        padding:12px 14px}
+.metric-val{font-size:1.4rem;font-weight:700;color:var(--accent)}
+.metric-lbl{font-size:.72rem;color:var(--muted);margin-top:2px}
 
-        .card-title::before {
-            content: '';
-            width: 4px;
-            height: 20px;
-            background: var(--accent);
-            border-radius: 2px;
-        }
+/* ── progress bar ── */
+.progress-wrap{height:4px;background:var(--border);border-radius:2px;overflow:hidden;margin-bottom:14px;display:none}
+.progress-wrap.show{display:block}
+.progress-bar{height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--accent2));
+              transition:width .3s;border-radius:2px}
 
-        .full-width {
-            grid-column: 1 / -1;
-        }
+/* ── voices ── */
+.search{margin-bottom:12px}
+.filter-row{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.filter-btn{padding:4px 12px;border-radius:20px;border:1px solid var(--border);
+            background:transparent;color:var(--muted);font-size:.78rem;cursor:pointer;
+            transition:all .15s;font-family:inherit}
+.filter-btn.active,.filter-btn:hover{border-color:var(--accent);color:var(--accent);
+  background:rgba(99,102,241,.1)}
+.voices-box{max-height:360px;overflow-y:auto;display:flex;flex-direction:column;gap:6px}
+.voices-box::-webkit-scrollbar{width:4px}
+.voices-box::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.vi{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;
+    background:var(--bg2);border-radius:8px;cursor:pointer;transition:all .15s;
+    border:1px solid transparent;font-size:.85rem}
+.vi:hover{border-color:var(--accent);background:rgba(99,102,241,.08)}
+.vi.sel{border-color:var(--accent);background:rgba(99,102,241,.15)}
+.vi-name{font-weight:500}
+.vi-meta{display:flex;gap:10px;color:var(--muted);font-size:.75rem}
+.vi.sel .vi-meta{color:rgba(200,200,255,.7)}
+.tag{display:inline-block;padding:1px 7px;border-radius:10px;font-size:.68rem;font-weight:500}
+.tag-f{background:rgba(236,72,153,.15);color:#f472b6}
+.tag-m{background:rgba(59,130,246,.15);color:#60a5fa}
+.tag-ga{background:rgba(34,197,94,.12);color:#4ade80}
+.tag-prev{background:rgba(245,158,11,.12);color:#fbbf24}
+.vstat{display:flex;gap:16px;margin-bottom:12px}
+.vstat-n{font-size:1.3rem;font-weight:700;color:var(--accent)}
+.vstat-l{font-size:.72rem;color:var(--muted)}
 
-        /* TTS Section */
-        .tts-controls {
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-        }
+/* ── subtitles ── */
+.srt-box{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px;
+         font-family:'JetBrains Mono',monospace;font-size:.8rem;color:var(--muted);
+         max-height:280px;overflow-y:auto;white-space:pre-wrap;line-height:1.7}
+.srt-box .srt-idx{color:var(--accent)}
+.srt-box .srt-time{color:var(--amber)}
 
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
+/* ── file:// warning banner ── */
+.warn-banner{display:none;align-items:flex-start;gap:12px;background:rgba(245,158,11,.1);
+  border:1px solid rgba(245,158,11,.35);border-radius:12px;padding:14px 18px;
+  margin-bottom:24px;font-size:.88rem;line-height:1.6;color:var(--amber)}
+.warn-banner.show{display:flex}
+.warn-banner code{background:rgba(245,158,11,.15);padding:1px 6px;border-radius:4px;
+  font-family:'JetBrains Mono',monospace;font-size:.82rem}
 
-        label {
-            font-size: 0.875rem;
-            color: var(--text-secondary);
-            font-weight: 500;
-        }
+/* ── spinner overlay ── */
+.overlay{position:fixed;inset:0;background:rgba(8,8,16,.88);display:flex;align-items:center;
+         justify-content:center;z-index:200;opacity:0;pointer-events:none;transition:opacity .3s}
+.overlay.show{opacity:1;pointer-events:auto}
+.spin{width:42px;height:42px;border:3px solid var(--border);border-top-color:var(--accent);
+      border-radius:50%;animation:rot .7s linear infinite}
+@keyframes rot{to{transform:rotate(360deg)}}
 
-        textarea,
-        select,
-        input[type="text"] {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            padding: 12px 14px;
-            color: var(--text-primary);
-            font-size: 0.95rem;
-            transition: border-color 0.2s, box-shadow 0.2s;
-        }
-
-        textarea:focus,
-        select:focus,
-        input[type="text"]:focus {
-            outline: none;
-            border-color: var(--accent);
-            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
-        }
-
-        textarea {
-            min-height: 100px;
-            resize: vertical;
-        }
-
-        select {
-            cursor: pointer;
-        }
-
-        .controls-row {
-            display: flex;
-            gap: 12px;
-        }
-
-        .controls-row .form-group {
-            flex: 1;
-        }
-
-        button {
-            background: linear-gradient(135deg, var(--accent) 0%, #8b5cf6 100%);
-            color: white;
-            border: none;
-            border-radius: 10px;
-            padding: 12px 24px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-
-        button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
-        }
-
-        button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .btn-secondary {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
-        }
-
-        /* Audio Player */
-        .audio-container {
-            margin-top: 16px;
-            padding: 16px;
-            background: var(--bg-secondary);
-            border-radius: 10px;
-            display: none;
-        }
-
-        .audio-container.visible {
-            display: block;
-        }
-
-        audio {
-            width: 100%;
-            margin-top: 10px;
-        }
-
-        /* Voices Table */
-        .voices-container {
-            max-height: 400px;
-            overflow-y: auto;
-        }
-
-        .voices-grid {
-            display: grid;
-            gap: 8px;
-        }
-
-        .voice-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 12px 16px;
-            background: var(--bg-secondary);
-            border-radius: 10px;
-            font-size: 0.9rem;
-            cursor: pointer;
-            transition: background 0.2s, transform 0.2s;
-        }
-
-        .voice-item:hover {
-            background: var(--border);
-            transform: translateX(4px);
-        }
-
-        .voice-item.selected {
-            background: var(--accent);
-        }
-
-        .voice-name {
-            font-weight: 500;
-        }
-
-        .voice-meta {
-            display: flex;
-            gap: 16px;
-            color: var(--text-secondary);
-            font-size: 0.8rem;
-        }
-
-        .voice-item.selected .voice-meta {
-            color: rgba(255, 255, 255, 0.8);
-        }
-
-        /* Subtitles */
-        .subtitles-container {
-            max-height: 300px;
-            overflow-y: auto;
-            background: var(--bg-secondary);
-            border-radius: 10px;
-            padding: 16px;
-            font-family: 'SF Mono', 'Fira Code', monospace;
-            font-size: 0.85rem;
-            white-space: pre-wrap;
-            color: var(--text-secondary);
-        }
-
-        /* Status */
-        .status {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 12px 16px;
-            background: var(--bg-secondary);
-            border-radius: 10px;
-            font-size: 0.9rem;
-        }
-
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: var(--text-secondary);
-        }
-
-        .status-dot.loading {
-            background: var(--accent);
-            animation: pulse 1.5s infinite;
-        }
-
-        .status-dot.success {
-            background: var(--success);
-        }
-
-        @keyframes pulse {
-
-            0%,
-            100% {
-                opacity: 1;
-            }
-
-            50% {
-                opacity: 0.4;
-            }
-        }
-
-        /* Search */
-        .search-box {
-            margin-bottom: 16px;
-        }
-
-        /* Stats */
-        .stats {
-            display: flex;
-            gap: 24px;
-            margin-bottom: 16px;
-        }
-
-        .stat-item {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .stat-value {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--accent);
-        }
-
-        .stat-label {
-            font-size: 0.8rem;
-            color: var(--text-secondary);
-        }
-
-        /* Loading overlay */
-        .loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(10, 10, 15, 0.9);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 100;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s;
-        }
-
-        .loading-overlay.visible {
-            opacity: 1;
-            pointer-events: auto;
-        }
-
-        .spinner {
-            width: 40px;
-            height: 40px;
-            border: 3px solid var(--border);
-            border-top-color: var(--accent);
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-        }
-
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
-    </style>
+/* ── cbr badge ── */
+.cbr-note{display:flex;align-items:center;gap:6px;font-size:.75rem;color:var(--green);
+          background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.2);
+          border-radius:8px;padding:6px 12px;margin-bottom:14px}
+</style>
 </head>
-
 <body>
-    <div class="loading-overlay" id="loadingOverlay">
-        <div class="spinner"></div>
+
+<div class="overlay" id="overlay"><div class="spin"></div></div>
+
+<div class="wrap">
+  <header>
+    <h1>🔊 Edge TTS JS</h1>
+    <p class="tagline">Microsoft Edge 在线文本转语音 · TypeScript/JavaScript 库</p>
+    <span class="badge">✦ CBR 精确偏移补偿 · 字幕同步优化</span>
+  </header>
+
+  <!-- file:// protocol notice -->
+  <div class="warn-banner" id="warnBanner">
+    <span style="font-size:1.3rem">⚠️</span>
+    <div>
+      <strong>请通过本地 HTTP 服务器访问此页面</strong><br>
+      直接用 <code>file://</code> 打开时 ES 模块和 WebSocket 均不可用。<br>
+      请运行: <code>npx serve . -p 3000</code>，然后访问 <code>http://localhost:3000/demo.html</code>
     </div>
+  </div>
 
-    <div class="container">
-        <header>
-            <h1>🔊 Edge TTS Demo</h1>
-            <p class="subtitle">使用 Microsoft Edge 在线文本转语音服务的 TypeScript/JavaScript 库</p>
-        </header>
+  <div class="grid">
 
-        <div class="grid">
-            <!-- TTS Card -->
-            <div class="card">
-                <h2 class="card-title">文本转语音</h2>
-                <div class="tts-controls">
-                    <div class="form-group">
-                        <label for="ttsText">输入文本</label>
-                        <textarea id="ttsText"
-                            placeholder="输入要转换的文本...">你好，欢迎使用 Edge TTS！这是一个基于 TypeScript 的文本转语音库。</textarea>
-                    </div>
+    <!-- ── TTS 合成 ── -->
+    <div class="card">
+      <div class="card-head"><span class="icon">🎙️</span>文本转语音</div>
 
-                    <div class="controls-row">
-                        <div class="form-group">
-                            <label for="rateSlider">语速: <span id="rateValue">+0%</span></label>
-                            <input type="range" id="rateSlider" min="-50" max="100" value="0">
-                        </div>
-                        <div class="form-group">
-                            <label for="pitchSlider">音调: <span id="pitchValue">+0Hz</span></label>
-                            <input type="range" id="pitchSlider" min="-50" max="50" value="0">
-                        </div>
-                    </div>
+      <div class="cbr-note">
+        ✅ CBR 偏移算法 — 长文本字幕时间轴精确，无累积漂移
+      </div>
 
-                    <div class="status" id="ttsStatus">
-                        <span class="status-dot" id="statusDot"></span>
-                        <span id="statusText">准备就绪</span>
-                    </div>
+      <div class="fg">
+        <label for="ttsText">输入文本</label>
+        <textarea id="ttsText">你好，欢迎使用 Edge TTS JavaScript 库！本次版本同步了 Python edge-tts 最新的 CBR 音频字节精确偏移补偿算法，彻底解决了长文本合成时字幕时间轴累积漂移的问题。</textarea>
+      </div>
 
-                    <button id="synthesizeBtn" onclick="synthesize()">
-                        🎙️ 开始合成
-                    </button>
-
-                    <div class="audio-container" id="audioContainer">
-                        <label>生成的音频:</label>
-                        <audio id="audioPlayer" controls></audio>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Voices Card -->
-            <div class="card">
-                <h2 class="card-title">可用语音</h2>
-                <div class="stats" id="voiceStats">
-                    <div class="stat-item">
-                        <span class="stat-value" id="totalVoices">-</span>
-                        <span class="stat-label">总语音数</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-value" id="totalLocales">-</span>
-                        <span class="stat-label">语言/地区</span>
-                    </div>
-                </div>
-
-                <div class="search-box">
-                    <input type="text" id="voiceSearch" placeholder="搜索语音 (如: zh-CN, Jenny, Female)"
-                        oninput="filterVoices()">
-                </div>
-
-                <div class="voices-container">
-                    <div class="voices-grid" id="voicesList">
-                        <div class="voice-item">正在加载语音列表...</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Subtitles Card -->
-            <div class="card full-width">
-                <h2 class="card-title">字幕输出 (SRT)</h2>
-                <div class="subtitles-container" id="subtitlesOutput">
-                    合成音频后，字幕将显示在这里...
-                </div>
-            </div>
+      <div class="row" style="margin-bottom:14px">
+        <div class="fg">
+          <label for="rateSlider">语速: <span id="rateVal">+0%</span></label>
+          <input type="range" id="rateSlider" min="-50" max="100" value="0">
         </div>
+        <div class="fg">
+          <label for="pitchSlider">音调: <span id="pitchVal">+0Hz</span></label>
+          <input type="range" id="pitchSlider" min="-50" max="50" value="0">
+        </div>
+      </div>
+
+      <div class="row" style="margin-bottom:14px">
+        <div class="fg">
+          <label for="volumeSlider">音量: <span id="volVal">+0%</span></label>
+          <input type="range" id="volumeSlider" min="-50" max="50" value="0">
+        </div>
+        <div class="fg">
+          <label for="boundaryType">字幕类型</label>
+          <select id="boundaryType">
+            <option value="SentenceBoundary">SentenceBoundary（句子）</option>
+            <option value="WordBoundary">WordBoundary（单词）</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="status" id="status">
+        <span class="dot" id="dot"></span>
+        <span id="statusText">准备就绪</span>
+      </div>
+
+      <div class="progress-wrap" id="progressWrap">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+
+      <button class="btn btn-primary" id="synthBtn" onclick="synthesize()">
+        🎙️ 开始合成
+      </button>
+
+      <div class="audio-wrap" id="audioWrap">
+        <label>生成的音频</label>
+        <audio id="player" controls></audio>
+        <div class="btn-row">
+          <button class="btn btn-secondary btn-sm" onclick="downloadAudio()">⬇ 下载 MP3</button>
+          <button class="btn btn-secondary btn-sm" onclick="downloadSrt()">⬇ 下载 SRT</button>
+        </div>
+      </div>
     </div>
 
-    <script type="module">
-        import { Communicate, listVoices, VoicesManager, SubMaker } from './dist/index.js';
+    <!-- ── 性能指标 ── -->
+    <div class="card">
+      <div class="card-head"><span class="icon">📊</span>性能指标</div>
 
-        let voicesManager = null;
-        let allVoices = [];
-        let selectedVoice = 'zh-CN-XiaoxiaoNeural';
+      <div class="metrics">
+        <div class="metric">
+          <div class="metric-val" id="mDur">—</div>
+          <div class="metric-lbl">合成耗时 (ms)</div>
+        </div>
+        <div class="metric">
+          <div class="metric-val" id="mBytes">—</div>
+          <div class="metric-lbl">音频字节数</div>
+        </div>
+        <div class="metric">
+          <div class="metric-val" id="mChunks">—</div>
+          <div class="metric-lbl">音频分块数</div>
+        </div>
+        <div class="metric">
+          <div class="metric-val" id="mCues">—</div>
+          <div class="metric-lbl">字幕条数</div>
+        </div>
+      </div>
 
-        // Init
-        async function init() {
-            showLoading(true);
-            try {
-                const voices = await listVoices();
-                voicesManager = await VoicesManager.create(voices);
-                allVoices = voicesManager.getAllVoices();
+      <div class="metric" style="margin-bottom:14px">
+        <div class="metric-val" id="mOffset" style="font-size:1rem;word-break:break-all">—</div>
+        <div class="metric-lbl">CBR 偏移补偿值 (ticks)</div>
+      </div>
 
-                document.getElementById('totalVoices').textContent = allVoices.length;
-                document.getElementById('totalLocales').textContent = voicesManager.getLocales().length;
+      <div class="card-head" style="margin-top:8px"><span class="icon">🌐</span>可用语音</div>
 
-                renderVoices(allVoices);
-            } catch (error) {
-                console.error('Failed to load voices:', error);
-                document.getElementById('voicesList').innerHTML =
-                    '<div class="voice-item">加载失败: ' + error.message + '</div>';
-            }
-            showLoading(false);
-        }
+      <div class="vstat">
+        <div><div class="vstat-n" id="vTotal">—</div><div class="vstat-l">总语音数</div></div>
+        <div><div class="vstat-n" id="vLocales">—</div><div class="vstat-l">语言/地区</div></div>
+        <div><div class="vstat-n" id="vLangs">—</div><div class="vstat-l">语种</div></div>
+      </div>
 
-        function renderVoices(voices) {
-            const container = document.getElementById('voicesList');
-            container.innerHTML = voices.slice(0, 100).map(voice => `
-                <div class="voice-item ${voice.ShortName === selectedVoice ? 'selected' : ''}" 
-                     onclick="selectVoice('${voice.ShortName}')">
-                    <span class="voice-name">${voice.ShortName}</span>
-                    <span class="voice-meta">
-                        <span>${voice.Gender}</span>
-                        <span>${voice.Locale}</span>
-                    </span>
-                </div>
-            `).join('');
-        }
+      <div class="fg search">
+        <input type="text" id="voiceSearch" placeholder="搜索语音 (如: zh-CN, Jenny, Female…)" oninput="filterVoices()">
+      </div>
 
-        window.selectVoice = function (shortName) {
-            selectedVoice = shortName;
-            renderVoices(allVoices.filter(v =>
-                v.ShortName.toLowerCase().includes(document.getElementById('voiceSearch').value.toLowerCase())
-            ));
-        };
+      <div class="filter-row" id="genderFilters">
+        <button class="filter-btn active" data-g="" onclick="setGender(this,'')">全部</button>
+        <button class="filter-btn" data-g="Female" onclick="setGender(this,'Female')">👩 Female</button>
+        <button class="filter-btn" data-g="Male" onclick="setGender(this,'Male')">👨 Male</button>
+      </div>
 
-        window.filterVoices = function () {
-            const query = document.getElementById('voiceSearch').value.toLowerCase();
-            const filtered = allVoices.filter(v =>
-                v.ShortName.toLowerCase().includes(query) ||
-                v.Locale.toLowerCase().includes(query) ||
-                v.Gender.toLowerCase().includes(query)
-            );
-            renderVoices(filtered);
-        };
+      <div class="voices-box" id="voicesList">
+        <div class="vi">正在加载语音列表…</div>
+      </div>
+    </div>
 
-        window.synthesize = async function () {
-            const text = document.getElementById('ttsText').value;
-            if (!text.trim()) {
-                alert('请输入文本');
-                return;
-            }
+    <!-- ── 字幕输出 ── -->
+    <div class="card full">
+      <div class="card-head"><span class="icon">📝</span>字幕输出 (SRT)</div>
+      <div class="srt-box" id="srtOut">合成音频后，字幕将显示在这里…</div>
+    </div>
 
-            const rate = document.getElementById('rateSlider').value;
-            const pitch = document.getElementById('pitchSlider').value;
+  </div>
+</div>
 
-            setStatus('loading', '正在合成音频...');
-            document.getElementById('synthesizeBtn').disabled = true;
+<script type="module">
+import { Communicate, listVoices, VoicesManager, SubMaker } from './dist/index.js';
 
-            try {
-                const communicate = new Communicate(text, {
-                    voice: selectedVoice,
-                    rate: (rate >= 0 ? '+' : '') + rate + '%',
-                    pitch: (pitch >= 0 ? '+' : '') + pitch + 'Hz',
-                });
+// ── Proxy auto-detection ───────────────────────────────────────────────────
+// In some network environments (e.g. when a local VPN/proxy routes browser
+// WebSocket traffic differently from Node.js traffic), the browser cannot
+// reach speech.platform.bing.com via WebSocket directly.  A local Node.js
+// proxy (proxy.mjs) is provided to work around this: it connects to the
+// upstream using Node.js networking and relays frames to the browser.
+const PROXY_WS = 'ws://localhost:3001';
+let useProxy = false;
 
-                const audioChunks = [];
-                const submaker = new SubMaker();
+async function detectProxy() {
+  return new Promise(resolve => {
+    const ws = new WebSocket(PROXY_WS);
+    const t = setTimeout(() => { ws.close(); resolve(false); }, 1500);
+    ws.onopen  = () => { clearTimeout(t); ws.close(); resolve(true); };
+    ws.onerror = () => { clearTimeout(t); resolve(false); };
+  });
+}
 
-                for await (const chunk of communicate.stream()) {
-                    if (chunk.type === 'audio') {
-                        audioChunks.push(chunk.data);
-                    } else if (chunk.type === 'WordBoundary' || chunk.type === 'SentenceBoundary') {
-                        submaker.feed(chunk);
-                    }
-                }
+// Monkey-patch WebSocket so that connections to speech.platform.bing.com
+// are transparently redirected through the local proxy.
+function installProxyPatch() {
+  const OrigWS = window.WebSocket;
+  window.WebSocket = function(url, ...args) {
+    if (typeof url === 'string' && url.includes('speech.platform.bing.com')) {
+      const p = new URL(url).searchParams;
+      url = `${PROXY_WS}?ConnectionId=${p.get('ConnectionId') ?? ''}` +
+            `&Sec-MS-GEC=${p.get('Sec-MS-GEC') ?? ''}` +
+            `&Sec-MS-GEC-Version=${p.get('Sec-MS-GEC-Version') ?? ''}`;
+    }
+    return new OrigWS(url, ...args);
+  };
+  window.WebSocket.prototype = OrigWS.prototype;
+  Object.assign(window.WebSocket, OrigWS);
+}
 
-                // Create audio blob and play
-                const audioBlob = new Blob(audioChunks, { type: 'audio/mpeg' });
-                const audioUrl = URL.createObjectURL(audioBlob);
-                const audioPlayer = document.getElementById('audioPlayer');
-                audioPlayer.src = audioUrl;
-                document.getElementById('audioContainer').classList.add('visible');
+// ── state ──
+let voicesManager = null;
+let allVoices = [];
+let selectedVoice = 'zh-CN-XiaoxiaoNeural';
+let genderFilter = '';
+let lastAudioBlob = null;
+let lastSrt = '';
+let lastSubmaker = null;
 
-                // Show subtitles
-                const srt = submaker.getSrt();
-                document.getElementById('subtitlesOutput').textContent = srt || '（无字幕数据）';
+// ── boot ──
+(async () => {
+  const banner = document.getElementById('warnBanner');
+  const bannerDiv = banner.querySelector('div');
 
-                setStatus('success', '合成完成！');
-            } catch (error) {
-                console.error('Synthesis failed:', error);
-                setStatus('error', '合成失败: ' + error.message);
-            }
+  if (location.protocol === 'file:') {
+    banner.classList.add('show');
+  } else {
+    // Detect proxy before loading voices
+    useProxy = await detectProxy();
+    if (useProxy) {
+      installProxyPatch();
+      Object.assign(banner.style, {
+        background: 'rgba(34,197,94,.08)', borderColor: 'rgba(34,197,94,.3)', color: 'var(--green)'
+      });
+      bannerDiv.innerHTML = '<strong>✅ 本地代理已连接</strong> — WebSocket 将通过 '
+        + `<code>ws://localhost:3001</code> 代理转发。`;
+      banner.classList.add('show');
+    } else {
+      Object.assign(banner.style, {
+        background: 'rgba(245,158,11,.08)', borderColor: 'rgba(245,158,11,.3)', color: 'var(--amber)'
+      });
+      bannerDiv.innerHTML = '<strong>⚠️ 未检测到本地代理</strong> — '
+        + '若合成失败，请再开一个终端运行 '
+        + '<code>node proxy.mjs</code>，然后刷新页面。';
+      banner.classList.add('show');
+    }
+  }
 
-            document.getElementById('synthesizeBtn').disabled = false;
-        };
+  showOverlay(true);
+  try {
+    const voices = await listVoices();
+    voicesManager = await VoicesManager.create(voices);
+    allVoices = voicesManager.getAllVoices();
+    document.getElementById('vTotal').textContent = allVoices.length;
+    document.getElementById('vLocales').textContent = voicesManager.getLocales().length;
+    document.getElementById('vLangs').textContent = voicesManager.getLanguages().length;
+    renderVoices(allVoices);
+  } catch(e) {
+    document.getElementById('voicesList').innerHTML =
+      `<div class="vi" style="color:var(--red)">加载失败: ${e.message}</div>`;
+  }
+  showOverlay(false);
+})();
 
-        function setStatus(type, text) {
-            const dot = document.getElementById('statusDot');
-            const statusText = document.getElementById('statusText');
-            dot.className = 'status-dot ' + type;
-            statusText.textContent = text;
-        }
+// ── voices ──
+function renderVoices(list) {
+  const el = document.getElementById('voicesList');
+  if (!list.length) { el.innerHTML = '<div class="vi" style="color:var(--muted)">无匹配结果</div>'; return; }
+  el.innerHTML = list.slice(0, 120).map(v => {
+    const gTag = v.Gender === 'Female'
+      ? `<span class="tag tag-f">F</span>`
+      : `<span class="tag tag-m">M</span>`;
+    const sTag = v.Status === 'Preview'
+      ? `<span class="tag tag-prev">Preview</span>`
+      : `<span class="tag tag-ga">GA</span>`;
+    const sel = v.ShortName === selectedVoice ? ' sel' : '';
+    return `<div class="vi${sel}" onclick="selectVoice('${v.ShortName}')">
+      <span class="vi-name">${v.ShortName}</span>
+      <span class="vi-meta">${gTag}${sTag}<span>${v.Locale}</span></span>
+    </div>`;
+  }).join('');
+}
 
-        function showLoading(show) {
-            document.getElementById('loadingOverlay').classList.toggle('visible', show);
-        }
+window.selectVoice = name => {
+  selectedVoice = name;
+  applyFilters();
+};
 
-        // Slider updates
-        document.getElementById('rateSlider').addEventListener('input', (e) => {
-            const val = e.target.value;
-            document.getElementById('rateValue').textContent = (val >= 0 ? '+' : '') + val + '%';
-        });
+window.filterVoices = applyFilters;
 
-        document.getElementById('pitchSlider').addEventListener('input', (e) => {
-            const val = e.target.value;
-            document.getElementById('pitchValue').textContent = (val >= 0 ? '+' : '') + val + 'Hz';
-        });
+window.setGender = (btn, g) => {
+  genderFilter = g;
+  document.querySelectorAll('#genderFilters .filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  applyFilters();
+};
 
-        // Start
-        init();
-    </script>
+function applyFilters() {
+  const q = document.getElementById('voiceSearch').value.toLowerCase();
+  let list = genderFilter ? voicesManager.findByGender(genderFilter) : allVoices;
+  if (q) list = list.filter(v =>
+    v.ShortName.toLowerCase().includes(q) ||
+    v.Locale.toLowerCase().includes(q) ||
+    (v.FriendlyName||'').toLowerCase().includes(q)
+  );
+  renderVoices(list);
+}
+
+// ── synthesize ──
+window.synthesize = async () => {
+  const text = document.getElementById('ttsText').value.trim();
+  if (!text) { alert('请输入文本'); return; }
+
+  const rate = document.getElementById('rateSlider').value;
+  const pitch = document.getElementById('pitchSlider').value;
+  const vol = document.getElementById('volumeSlider').value;
+  const boundary = document.getElementById('boundaryType').value;
+
+  setStatus('loading', '正在合成音频…');
+  document.getElementById('synthBtn').disabled = true;
+  document.getElementById('progressWrap').classList.add('show');
+  document.getElementById('progressBar').style.width = '0';
+
+  const t0 = performance.now();
+  let audioBytes = 0, audioChunkCount = 0;
+
+  try {
+    const comm = new Communicate(text, {
+      voice: selectedVoice,
+      rate:   (rate  >= 0 ? '+' : '') + rate  + '%',
+      pitch:  (pitch >= 0 ? '+' : '') + pitch + 'Hz',
+      volume: (vol   >= 0 ? '+' : '') + vol   + '%',
+      boundary,
+    });
+
+    const chunks = [];
+    const sub = new SubMaker();
+    lastSubmaker = sub;
+
+    // Simulate progress
+    let prog = 5;
+    const ticker = setInterval(() => {
+      prog = Math.min(prog + 2, 90);
+      document.getElementById('progressBar').style.width = prog + '%';
+    }, 200);
+
+    for await (const chunk of comm.stream()) {
+      if (chunk.type === 'audio') {
+        chunks.push(chunk.data);
+        audioBytes += chunk.data.length;
+        audioChunkCount++;
+      } else if (chunk.type === 'WordBoundary' || chunk.type === 'SentenceBoundary') {
+        sub.feed(chunk);
+      }
+    }
+
+    clearInterval(ticker);
+    document.getElementById('progressBar').style.width = '100%';
+
+    const elapsed = Math.round(performance.now() - t0);
+
+    // Build audio
+    lastAudioBlob = new Blob(chunks, { type: 'audio/mpeg' });
+    const url = URL.createObjectURL(lastAudioBlob);
+    const player = document.getElementById('player');
+    player.src = url;
+    document.getElementById('audioWrap').classList.add('show');
+
+    // SRT
+    lastSrt = sub.getSrt();
+    renderSrt(lastSrt);
+
+    // Metrics — access internal state via comm (read-only after stream)
+    document.getElementById('mDur').textContent    = elapsed.toLocaleString();
+    document.getElementById('mBytes').textContent  = audioBytes.toLocaleString();
+    document.getElementById('mChunks').textContent = audioChunkCount;
+    document.getElementById('mCues').textContent   = sub.getCueCount();
+
+    // CBR offset: ticks = bytes * 8 * 10_000_000 / 48_000
+    const cbrTicks = Math.floor(audioBytes * 8 * 10_000_000 / 48_000);
+    document.getElementById('mOffset').textContent = cbrTicks.toLocaleString() + ' ticks';
+
+    setStatus('ok', `合成完成！耗时 ${elapsed} ms · ${(audioBytes/1024).toFixed(1)} KB`);
+  } catch(e) {
+    console.error(e);
+    if (location.protocol === 'file:') {
+      setStatus('err', '请通过 HTTP 服务器访问： npx serve . -p 3000');
+    } else {
+      setStatus('err', `合成失败: ${e.message}`);
+    }
+  }
+
+  document.getElementById('synthBtn').disabled = false;
+  setTimeout(() => document.getElementById('progressWrap').classList.remove('show'), 800);
+};
+
+// ── render SRT with syntax highlight ──
+function renderSrt(srt) {
+  if (!srt) { document.getElementById('srtOut').textContent = '（无字幕数据）'; return; }
+  // Highlight index / timestamp lines
+  const html = srt
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/^(\d+)$/gm, '<span class="srt-idx">$1</span>')
+    .replace(/^(\d{2}:\d{2}:\d{2},\d{3} --> \d{2}:\d{2}:\d{2},\d{3})$/gm,
+             '<span class="srt-time">$1</span>');
+  document.getElementById('srtOut').innerHTML = html;
+}
+
+// ── download helpers ──
+window.downloadAudio = () => {
+  if (!lastAudioBlob) return;
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(lastAudioBlob);
+  a.download = 'edge-tts-output.mp3';
+  a.click();
+};
+
+window.downloadSrt = () => {
+  if (!lastSrt) return;
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([lastSrt], { type: 'text/plain' }));
+  a.download = 'edge-tts-subtitles.srt';
+  a.click();
+};
+
+// ── helpers ──
+function setStatus(type, msg) {
+  const dot = document.getElementById('dot');
+  dot.className = 'dot ' + (type === 'loading' ? 'loading' : type === 'ok' ? 'ok' : 'err');
+  document.getElementById('statusText').textContent = msg;
+}
+
+function showOverlay(v) {
+  document.getElementById('overlay').classList.toggle('show', v);
+}
+
+// ── slider labels ──
+['rate','pitch','volume'].forEach(id => {
+  const slider = document.getElementById(id + 'Slider');
+  const label  = document.getElementById(id === 'rate' ? 'rateVal' : id === 'pitch' ? 'pitchVal' : 'volVal');
+  const unit   = id === 'pitch' ? 'Hz' : '%';
+  slider.addEventListener('input', e => {
+    const v = e.target.value;
+    label.textContent = (v >= 0 ? '+' : '') + v + unit;
+  });
+});
+</script>
 </body>
-
 </html>

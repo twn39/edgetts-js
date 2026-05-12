@@ -14,7 +14,10 @@
 
 import { Subtitle } from './types';
 
-const MULTI_WS_REGEX = /\n\n+/g;
+// No global flag here: a global RegExp maintains lastIndex state across calls,
+// which causes alternating test()/replace() calls to produce inconsistent
+// results. Instead we use the flag only where replace() is called inline.
+const MULTI_WS_REGEX = /\n\n+/;
 
 // Info message if truthy return -> Function taking a Subtitle, skip if True
 const SUBTITLE_SKIP_CONDITIONS: Array<[string, (sub: Subtitle) => boolean]> = [
@@ -112,11 +115,13 @@ export class SubtitleClass implements Subtitle {
 export function makeLegalContent(content: string): string {
   // Optimisation: Usually the content we get is legally valid. Do a quick
   // check to see if we really need to do anything here.
+  // Use a fresh regex test (not MULTI_WS_REGEX) to avoid sharing lastIndex.
   if (content && content[0] !== '\n' && !MULTI_WS_REGEX.test(content)) {
     return content;
   }
 
-  const legalContent = content.trim().replace(MULTI_WS_REGEX, '\n');
+  // Replace all runs of two or more newlines with a single newline.
+  const legalContent = content.trim().replace(/\n\n+/g, '\n');
   return legalContent;
 }
 
